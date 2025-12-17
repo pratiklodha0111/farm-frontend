@@ -1,28 +1,45 @@
 name: CICD
+
 on:
   push:
     branches:
       - deploy-to-ec2
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps: 
-      - name: Checkout Source
+
+    steps:
+      - name: Checkout source
         uses: actions/checkout@v3
-      - name: Login To Docker hub
-        uses: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-      - name: Build docker image
-        run: docker build -t photochitran/reactjs-app .
-      - name: Publish image to docker hub
-        run: docker push photochitran/reactjs-app:latest
+
+      - name: Login to Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t photochitran/reactjs-app:latest .
+
+      - name: Push image to Docker Hub
+        run: |
+          docker push photochitran/reactjs-app:latest
 
   deploy:
     needs: build
     runs-on: [aws-ec2]
+
     steps:
-      - name: Pull Image from docker hub
+      - name: Pull image
         run: docker pull photochitran/reactjs-app:latest
-      - name: Delete old container
-        run: docker rm -f reactContaier
-      - name: Run docker container
-        run: docker run -d -p 3000:80 --name reactContaier photochitran/reactjs-app
+
+      - name: Stop & remove old container
+        run: |
+          docker rm -f reactContainer || true
+
+      - name: Run new container
+        run: |
+          docker run -d \
+            -p 3000:80 \
+            --name reactContainer \
+            photochitran/reactjs-app:latest
