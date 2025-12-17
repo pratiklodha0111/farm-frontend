@@ -22,7 +22,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [aws-ec2-react]
+    runs-on: [self-hosted,aws-ec2-react]
 
     steps:
       - name: Pull image
